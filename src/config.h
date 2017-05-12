@@ -71,6 +71,7 @@ extern void config_save_emoncms(String server, String node, String apikey, Strin
 // Save the MQTT broker details
 // -------------------------------------------------------------------
 extern void config_save_mqtt(String server, String topic, String prefix, String user, String pass);
+extern void config_save_mqtt_server(String server);
 
 // -------------------------------------------------------------------
 // Save the admin/web interface details

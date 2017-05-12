@@ -198,6 +198,16 @@ void config_save_mqtt(String server, String topic, String prefix, String user, S
   EEPROM.commit();
 }
 
+void config_save_mqtt_server(String server)
+{
+  mqtt_server = server;
+
+  // Save MQTT server max 45 characters
+  EEPROM_write_string(EEPROM_MQTT_SERVER_START, EEPROM_MQTT_SERVER_SIZE, mqtt_server);
+
+  EEPROM.commit();
+}
+
 void config_save_admin(String user, String pass)
 {
   www_username = user;

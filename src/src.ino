@@ -31,6 +31,11 @@
 #include "input.h"
 #include "emoncms.h"
 #include "mqtt.h"
+#include <WiFiUdp.h>
+
+WiFiUDP Udp;
+unsigned int localUdpPort = 5005;  // local port to listen on
+char incomingPacket[255];  // buffer for incoming packets
 
 // -------------------------------------------------------------------
 // SETUP
@@ -62,6 +67,8 @@ void setup() {
 
   DEBUG.println("Server started");
 
+  Udp.begin(localUdpPort);
+  
   delay(100);
 } // end setup
 
@@ -86,6 +93,27 @@ void loop()
       mqtt_loop();
       if(gotInput) {
         mqtt_publish(input);
+      }
+    }
+  }
+
+  // UDP Broadcast receive 
+  int packetSize = Udp.parsePacket();
+  if (packetSize)
+  {
+    // receive incoming UDP packets
+    Serial.printf("Received %d bytes from %s, port %d\n", packetSize, Udp.remoteIP().toString().c_str(), Udp.remotePort());
+    int len = Udp.read(incomingPacket, 255);
+    if (len > 0)
+    {
+      incomingPacket[len] = 0;
+    }
+    Serial.printf("UDP packet contents: %s\n", incomingPacket);
+
+    if (strcmp(incomingPacket,"emonpi.local")==0) {
+      if (mqtt_server!=Udp.remoteIP().toString().c_str()) {
+        config_save_mqtt_server(Udp.remoteIP().toString().c_str());
+        Serial.printf("MQTT Server Updated");
       }
     }
   }
