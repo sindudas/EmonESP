@@ -56,7 +56,7 @@ String get_https(const char* fingerprint, const char* host, String url, int http
     // Handle message receive
     while(client.available()){
       String line = client.readStringUntil('\r');
-      DEBUG.println(line); //debug
+      //DEBUG.println(line); //debug
       if (line.startsWith("HTTP/1.1 200 OK")) {
         return("ok");
       }

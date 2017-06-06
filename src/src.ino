@@ -31,6 +31,7 @@
 #include "input.h"
 #include "emoncms.h"
 #include "mqtt.h"
+#include "http.h"
 #include <WiFiUdp.h>
 
 WiFiUDP Udp;
@@ -112,8 +113,31 @@ void loop()
 
     if (strcmp(incomingPacket,"emonpi.local")==0) {
       if (mqtt_server!=Udp.remoteIP().toString().c_str()) {
-        config_save_mqtt_server(Udp.remoteIP().toString().c_str());
+        config_save_mqtt_server(Udp.remoteIP().toString().c_str());        
         Serial.printf("MQTT Server Updated");
+        
+        String url = "/emoncms/device/mqttauth.json";
+        String result="";
+        String mqtt_username = "";
+        String mqtt_password = "";
+        String mqtt_basetopic = "";
+        int stringpart = 0;
+        
+        result = get_http(Udp.remoteIP().toString().c_str(), url);
+        if (result!="request registered") {
+            for (int i=0; i<result.length(); i++) {
+                char c = result[i];
+                if (c==':') { 
+                    stringpart++; 
+                } else {
+                    if (stringpart==0) mqtt_username += c;
+                    if (stringpart==1) mqtt_password += c;
+                    if (stringpart==2) mqtt_basetopic += c;
+                }
+            }
+            config_save_mqtt(Udp.remoteIP().toString().c_str(),mqtt_basetopic,"",mqtt_username,mqtt_password);
+            DEBUG.println("MQTT Settings:"); DEBUG.println(result);
+        }
       }
     }
   }
