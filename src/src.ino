@@ -31,6 +31,12 @@
 #include "input.h"
 #include "emoncms.h"
 #include "mqtt.h"
+#include "http.h"
+#include <WiFiUdp.h>
+
+WiFiUDP Udp;
+unsigned int localUdpPort = 5005;  // local port to listen on
+char incomingPacket[255];  // buffer for incoming packets
 
 // -------------------------------------------------------------------
 // SETUP
@@ -62,6 +68,8 @@ void setup() {
 
   DEBUG.println("Server started");
 
+  Udp.begin(localUdpPort);
+  
   delay(100);
 } // end setup
 
@@ -90,5 +98,51 @@ void loop()
       }
     }
   }
-} // end loop
 
+  // UDP Broadcast receive 
+  int packetSize = Udp.parsePacket();
+  if (packetSize)
+  {
+    // receive incoming UDP packets
+    Serial.printf("Received %d bytes from %s, port %d\n", packetSize, Udp.remoteIP().toString().c_str(), Udp.remotePort());
+    int len = Udp.read(incomingPacket, 255);
+    if (len > 0)
+    {
+      incomingPacket[len] = 0;
+    }
+    Serial.printf("UDP packet contents: %s\n", incomingPacket);
+
+    if (strcmp(incomingPacket,"emonpi.local")==0) {
+      if (mqtt_server!=Udp.remoteIP().toString().c_str()) {
+        config_save_mqtt_server(Udp.remoteIP().toString().c_str());        
+        Serial.printf("MQTT Server Updated");
+
+        // Fetch emoncms mqtt broker credentials
+        String url = "/emoncms/device/mqttauth.json";
+        String result="";
+        String mqtt_username = "";
+        String mqtt_password = "";
+        String mqtt_basetopic = "";
+        int stringpart = 0;
+
+        // This needs to be done with an encrypted request otherwise credentials are shared as plain text
+        result = get_http(Udp.remoteIP().toString().c_str(), url);
+        if (result!="request registered") {
+            for (int i=0; i<result.length(); i++) {
+                char c = result[i];
+                if (c==':') { 
+                    stringpart++; 
+                } else {
+                    if (stringpart==0) mqtt_username += c;
+                    if (stringpart==1) mqtt_password += c;
+                    if (stringpart==2) mqtt_basetopic += c;
+                }
+            }
+            config_save_mqtt(Udp.remoteIP().toString().c_str(),mqtt_basetopic,"",mqtt_username,mqtt_password);
+            DEBUG.println("MQTT Settings:"); DEBUG.println(result);
+        }
+        // ---------------------------------------------------------------------------------------------------
+      }
+    }
+  }
+} // end loop
