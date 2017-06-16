@@ -115,14 +115,16 @@ void loop()
       if (mqtt_server!=Udp.remoteIP().toString().c_str()) {
         config_save_mqtt_server(Udp.remoteIP().toString().c_str());        
         Serial.printf("MQTT Server Updated");
-        
+
+        // Fetch emoncms mqtt broker credentials
         String url = "/emoncms/device/mqttauth.json";
         String result="";
         String mqtt_username = "";
         String mqtt_password = "";
         String mqtt_basetopic = "";
         int stringpart = 0;
-        
+
+        // This needs to be done with an encrypted request otherwise credentials are shared as plain text
         result = get_http(Udp.remoteIP().toString().c_str(), url);
         if (result!="request registered") {
             for (int i=0; i<result.length(); i++) {
@@ -138,6 +140,7 @@ void loop()
             config_save_mqtt(Udp.remoteIP().toString().c_str(),mqtt_basetopic,"",mqtt_username,mqtt_password);
             DEBUG.println("MQTT Settings:"); DEBUG.println(result);
         }
+        // ---------------------------------------------------------------------------------------------------
       }
     }
   }
