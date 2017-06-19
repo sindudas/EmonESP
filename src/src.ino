@@ -38,6 +38,43 @@ WiFiUDP Udp;
 unsigned int localUdpPort = 5005;  // local port to listen on
 char incomingPacket[255];  // buffer for incoming packets
 
+byte mqtt_auth_transfer_flag = 0;
+unsigned long last_auth_request_attempt = 0;
+
+void auth_request() {
+
+    DEBUG.println("Fetching MQTT Auth");
+    DEBUG.println(mqtt_server.c_str());
+
+    // Fetch emoncms mqtt broker credentials
+    String url = "/emoncms/device/auth/request.json";
+    String result="";
+    String mqtt_username = "";
+    String mqtt_password = "";
+    String mqtt_basetopic = "";
+    int stringpart = 0;
+    
+    // This needs to be done with an encrypted request otherwise credentials are shared as plain text
+    result = get_http(mqtt_server.c_str(), url);
+    if (result!="request registered") {
+        for (int i=0; i<result.length(); i++) {
+            char c = result[i];
+            if (c==':') { 
+                stringpart++; 
+            } else {
+                if (stringpart==0) mqtt_username += c;
+                if (stringpart==1) mqtt_password += c;
+                if (stringpart==2) mqtt_basetopic += c;
+            }
+        }
+        mqtt_auth_transfer_flag = 2;
+        config_save_mqtt(mqtt_server.c_str(),mqtt_basetopic,"",mqtt_username,mqtt_password);
+        DEBUG.println("MQTT Settings:"); DEBUG.println(result);
+    }
+
+    delay(100);
+}
+
 // -------------------------------------------------------------------
 // SETUP
 // -------------------------------------------------------------------
@@ -116,33 +153,19 @@ void loop()
       if (mqtt_server!=Udp.remoteIP().toString().c_str()) {
         config_save_mqtt_server(Udp.remoteIP().toString().c_str());        
         Serial.printf("MQTT Server Updated");
-
-        // Fetch emoncms mqtt broker credentials
-        String url = "/emoncms/device/mqttauth.json";
-        String result="";
-        String mqtt_username = "";
-        String mqtt_password = "";
-        String mqtt_basetopic = "";
-        int stringpart = 0;
-
-        // This needs to be done with an encrypted request otherwise credentials are shared as plain text
-        result = get_http(Udp.remoteIP().toString().c_str(), url);
-        if (result!="request registered") {
-            for (int i=0; i<result.length(); i++) {
-                char c = result[i];
-                if (c==':') { 
-                    stringpart++; 
-                } else {
-                    if (stringpart==0) mqtt_username += c;
-                    if (stringpart==1) mqtt_password += c;
-                    if (stringpart==2) mqtt_basetopic += c;
-                }
-            }
-            config_save_mqtt(Udp.remoteIP().toString().c_str(),mqtt_basetopic,"",mqtt_username,mqtt_password);
-            DEBUG.println("MQTT Settings:"); DEBUG.println(result);
-        }
+        mqtt_auth_transfer_flag = 1;
+        auth_request();
         // ---------------------------------------------------------------------------------------------------
       }
     }
   }
+
+  if ((millis()-last_auth_request_attempt)>10000) {
+      last_auth_request_attempt = millis();
+
+      if (mqtt_auth_transfer_flag==1) {
+          auth_request();
+      }
+  }
+  
 } // end loop

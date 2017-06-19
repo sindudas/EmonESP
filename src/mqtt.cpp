@@ -38,6 +38,7 @@ long lastMqttReconnectAttempt = 0;
 int clientTimeout = 0;
 int i = 0;
 
+String nodename = "emontx";
 
 // -------------------------------------------------------------------
 // MQTT Connect
@@ -49,7 +50,7 @@ boolean mqtt_connect()
   String strID = String(ESP.getChipId());
   if (mqttclient.connect(strID.c_str(), mqtt_user.c_str(), mqtt_pass.c_str())) {  // Attempt to connect
     DEBUG.println("MQTT connected");
-    mqttclient.publish(mqtt_topic.c_str(), "connected"); // Once connected, publish an announcement..
+    mqtt_publish("describe:emontx-HP");
   } else {
     DEBUG.print("MQTT failed: ");
     DEBUG.println(mqttclient.state());
@@ -68,7 +69,7 @@ boolean mqtt_connect()
 void mqtt_publish(String data)
 {
   String mqtt_data = "";
-  String topic = mqtt_topic + "/" + mqtt_feed_prefix;
+  String topic = mqtt_topic + "/" + nodename + "/" + mqtt_feed_prefix;
   int i=0;
   while (int (data[i]) != 0)
   {
@@ -93,13 +94,13 @@ void mqtt_publish(String data)
     //delay(100);
     DEBUG.printf("%s = %s\r\n", topic.c_str(), mqtt_data.c_str());
     mqttclient.publish(topic.c_str(), mqtt_data.c_str());
-    topic = mqtt_topic + "/" + mqtt_feed_prefix;
+    topic = mqtt_topic + "/" + nodename + "/" + mqtt_feed_prefix;
     mqtt_data="";
     i++;
     if (int(data[i]) == 0) break;
   }
 
-  String ram_topic = mqtt_topic + "/" + mqtt_feed_prefix + "freeram";
+  String ram_topic = mqtt_topic + "/" + nodename + "/" + mqtt_feed_prefix + "freeram";
   String free_ram = String(ESP.getFreeHeap());
   mqttclient.publish(ram_topic.c_str(), free_ram.c_str());
 }
@@ -114,10 +115,11 @@ void mqtt_loop()
   if (!mqttclient.connected()) {
     long now = millis();
     // try and reconnect continuously for first 5s then try again once every 10s
-    if ( (now < 50000) || ((now - lastMqttReconnectAttempt)  > 100000) ) {
+    if ( (now < 5000) || ((now - lastMqttReconnectAttempt)  > 10000) ) {
       lastMqttReconnectAttempt = now;
       if (mqtt_connect()) { // Attempt to reconnect
-        lastMqttReconnectAttempt = 0;
+        lastMqttReconnectAttempt = millis();
+        delay(100);
       }
     }
   } else {
@@ -126,14 +128,13 @@ void mqtt_loop()
   }
 }
 
-void mqtt_restart()
-{
+void mqtt_restart() {
   if (mqttclient.connected()) {
     mqttclient.disconnect();
   }
 }
 
-boolean mqtt_connected()
-{
+boolean mqtt_connected() {
   return mqttclient.connected();
 }
+
