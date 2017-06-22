@@ -38,7 +38,8 @@ long lastMqttReconnectAttempt = 0;
 int clientTimeout = 0;
 int i = 0;
 
-String nodename = "emontx";
+String node_name = "emontx";
+String node_describe = "describe:emontx-HP";
 
 // -------------------------------------------------------------------
 // MQTT Connect
@@ -50,7 +51,7 @@ boolean mqtt_connect()
   String strID = String(ESP.getChipId());
   if (mqttclient.connect(strID.c_str(), mqtt_user.c_str(), mqtt_pass.c_str())) {  // Attempt to connect
     DEBUG.println("MQTT connected");
-    mqtt_publish("describe:emontx-HP");
+    mqtt_publish(node_describe);
   } else {
     DEBUG.print("MQTT failed: ");
     DEBUG.println(mqttclient.state());
@@ -69,7 +70,7 @@ boolean mqtt_connect()
 void mqtt_publish(String data)
 {
   String mqtt_data = "";
-  String topic = mqtt_topic + "/" + nodename + "/" + mqtt_feed_prefix;
+  String topic = mqtt_topic + "/" + node_name + "/" + mqtt_feed_prefix;
   int i=0;
   while (int (data[i]) != 0)
   {
@@ -94,13 +95,13 @@ void mqtt_publish(String data)
     //delay(100);
     DEBUG.printf("%s = %s\r\n", topic.c_str(), mqtt_data.c_str());
     mqttclient.publish(topic.c_str(), mqtt_data.c_str());
-    topic = mqtt_topic + "/" + nodename + "/" + mqtt_feed_prefix;
+    topic = mqtt_topic + "/" + node_name + "/" + mqtt_feed_prefix;
     mqtt_data="";
     i++;
     if (int(data[i]) == 0) break;
   }
 
-  String ram_topic = mqtt_topic + "/" + nodename + "/" + mqtt_feed_prefix + "freeram";
+  String ram_topic = mqtt_topic + "/" + node_name + "/" + mqtt_feed_prefix + "freeram";
   String free_ram = String(ESP.getFreeHeap());
   mqttclient.publish(ram_topic.c_str(), free_ram.c_str());
 }
