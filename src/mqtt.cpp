@@ -38,9 +38,6 @@ long lastMqttReconnectAttempt = 0;
 int clientTimeout = 0;
 int i = 0;
 
-String node_name = "emontx";
-String node_describe = "describe:emontx-HP";
-
 // -------------------------------------------------------------------
 // MQTT Connect
 // -------------------------------------------------------------------

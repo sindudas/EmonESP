@@ -35,6 +35,8 @@
 // -------------------------------------------------------------------
 
 // Global config varables
+extern String node_name;
+extern String node_describe;
 
 // Wifi Network Strings
 extern String esid;
