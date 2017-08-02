@@ -34,6 +34,8 @@
 #include "http.h"
 #include "autoauth.h"
 
+bool enable_mqtt_control = 1;
+
 // -------------------------------------------------------------------
 // SETUP
 // -------------------------------------------------------------------
@@ -42,8 +44,13 @@ void setup() {
   // ---------------------------------------------------------
   // Hard-coded initial config for node_name and node_describe
   // ---------------------------------------------------------
-  node_name = "emontx";
-  node_describe = "describe:emontx-HP";
+  if (enable_mqtt_control) {
+    node_name = "smartplug";
+    node_describe = "describe:smartplug";
+  } else {
+    node_name = "emontx";
+    node_describe = "describe:emontx-HP";
+  }
   // ---------------------------------------------------------
   
   delay(2000);
@@ -52,6 +59,13 @@ void setup() {
 #ifdef DEBUG_SERIAL1
   Serial1.begin(115200);
 #endif
+
+
+  if (enable_mqtt_control) {
+    // pinMode(5, OUTPUT);    // WIFI RELAY
+    pinMode(12, OUTPUT);      // SONOFF S20
+    pinMode(16, OUTPUT); 
+  }
 
   DEBUG.println();
   DEBUG.print("EmonESP ");

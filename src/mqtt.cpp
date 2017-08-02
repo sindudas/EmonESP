@@ -39,16 +39,53 @@ int clientTimeout = 0;
 int i = 0;
 
 // -------------------------------------------------------------------
+// MQTT Control callback for WIFI Relay and Sonoff smartplug
+// -------------------------------------------------------------------
+void mqtt_callback(char* topic, byte* payload, unsigned int length) {
+  DEBUG.print("Message arrived [");
+  DEBUG.print(topic);
+  DEBUG.print("] ");
+  for (int i=0;i<length;i++) {
+    DEBUG.print((char)payload[i]);
+  }
+  DEBUG.println();
+
+  if (strcmp(topic,"emon/smartplug/status")==0) {
+    char state = (char) payload[0];
+  
+    if (state=='1') {
+      DEBUG.println("STATE:1");
+      //digitalWrite(5,HIGH);       // RELAY WIFI RELAY
+      digitalWrite(12,HIGH);        // RELAY SONOFF S20
+      digitalWrite(16,HIGH); 
+    } else {
+      DEBUG.println("STATE:0");
+      //digitalWrite(5,LOW);       // RELAY WIFI RELAY
+      digitalWrite(12,LOW);        // RELAY SONOFF S20
+      digitalWrite(16,LOW);
+    }
+  }
+}
+
+// -------------------------------------------------------------------
 // MQTT Connect
 // -------------------------------------------------------------------
 boolean mqtt_connect()
 {
   mqttclient.setServer(mqtt_server.c_str(), 1883);
+  if (enable_mqtt_control) mqttclient.setCallback(mqtt_callback);
+  
   DEBUG.println("MQTT Connecting...");
   String strID = String(ESP.getChipId());
   if (mqttclient.connect(strID.c_str(), mqtt_user.c_str(), mqtt_pass.c_str())) {  // Attempt to connect
     DEBUG.println("MQTT connected");
     mqtt_publish(node_describe);
+    
+    if (enable_mqtt_control) {
+        String subscribe_topic = mqtt_topic + "/" + mqtt_feed_prefix + "#";
+        mqttclient.subscribe(subscribe_topic.c_str());
+    }
+    
   } else {
     DEBUG.print("MQTT failed: ");
     DEBUG.println(mqttclient.state());
