@@ -38,6 +38,8 @@ long lastMqttReconnectAttempt = 0;
 int clientTimeout = 0;
 int i = 0;
 
+#define ENABLE_MQTT_CONTROL 1
+
 // -------------------------------------------------------------------
 // MQTT Control callback for WIFI Relay and Sonoff smartplug
 // -------------------------------------------------------------------
@@ -73,7 +75,9 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
 boolean mqtt_connect()
 {
   mqttclient.setServer(mqtt_server.c_str(), 1883);
-  if (enable_mqtt_control) mqttclient.setCallback(mqtt_callback);
+  #ifdef ENABLE_MQTT_CONTROL
+    mqttclient.setCallback(mqtt_callback);
+  #endif
   
   DEBUG.println("MQTT Connecting...");
   String strID = String(ESP.getChipId());
@@ -81,10 +85,10 @@ boolean mqtt_connect()
     DEBUG.println("MQTT connected");
     mqtt_publish(node_describe);
     
-    if (enable_mqtt_control) {
-        String subscribe_topic = mqtt_topic + "/" + mqtt_feed_prefix + "#";
-        mqttclient.subscribe(subscribe_topic.c_str());
-    }
+    #ifdef ENABLE_MQTT_CONTROL
+      String subscribe_topic = mqtt_topic + "/" + mqtt_feed_prefix + "#";
+      mqttclient.subscribe(subscribe_topic.c_str());
+    #endif
     
   } else {
     DEBUG.print("MQTT failed: ");

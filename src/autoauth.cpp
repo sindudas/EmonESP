@@ -62,9 +62,12 @@ void auth_request() {
                 if (stringpart==2) mqtt_basetopic += c;
             }
         }
-        mqtt_auth_transfer_flag = 2;
-        config_save_mqtt(mqtt_server.c_str(),mqtt_basetopic,"",mqtt_username,mqtt_password);
-        DEBUG.println("MQTT Settings:"); DEBUG.println(result);
+        // Only save if we received 3 setting parts (0,1,2)
+        if (stringpart==2) {
+            mqtt_auth_transfer_flag = 2;
+            config_save_mqtt(mqtt_server.c_str(),mqtt_basetopic,"",mqtt_username,mqtt_password);
+            DEBUG.println("MQTT Settings:"); DEBUG.println(result);
+        }
     }
 
     delay(100);
