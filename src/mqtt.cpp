@@ -26,6 +26,7 @@
 #include "emonesp.h"
 #include "mqtt.h"
 #include "config.h"
+#include "smartplug.h"
 
 #include <Arduino.h>
 #include <PubSubClient.h>             // MQTT https://github.com/knolleary/pubsubclient PlatformIO lib: 89
@@ -53,19 +54,7 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
   DEBUG.println();
 
   if (strcmp(topic,"emon/smartplug/status")==0) {
-    char state = (char) payload[0];
-  
-    if (state=='1') {
-      DEBUG.println("STATE:1");
-      //digitalWrite(5,HIGH);       // RELAY WIFI RELAY
-      digitalWrite(12,HIGH);        // RELAY SONOFF S20
-      digitalWrite(16,HIGH); 
-    } else {
-      DEBUG.println("STATE:0");
-      //digitalWrite(5,LOW);       // RELAY WIFI RELAY
-      digitalWrite(12,LOW);        // RELAY SONOFF S20
-      digitalWrite(16,LOW);
-    }
+    switch_relay(byte(payload[0]));
   }
 }
 

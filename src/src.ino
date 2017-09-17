@@ -33,6 +33,7 @@
 #include "mqtt.h"
 #include "http.h"
 #include "autoauth.h"
+#include "smartplug.h"
 
 #define ENABLE_MQTT_CONTROL 1
 
@@ -66,7 +67,7 @@ void setup() {
   #ifdef ENABLE_MQTT_CONTROL
     // pinMode(5, OUTPUT);    // WIFI RELAY
     pinMode(12, OUTPUT);      // SONOFF S20
-    pinMode(16, OUTPUT); 
+    pinMode(16, OUTPUT);
   #endif
 
   DEBUG.println();
@@ -102,6 +103,7 @@ void loop()
   ota_loop();
   web_server_loop();
   wifi_loop();
+  
 
   String input = "";
   boolean gotInput = input_get(input);
@@ -121,5 +123,10 @@ void loop()
   }
 
   auth_loop();
+  
+  #ifdef ENABLE_MQTT_CONTROL
+    control_loop();
+  #endif
+  
   
 } // end loop
