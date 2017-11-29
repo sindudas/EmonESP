@@ -45,12 +45,12 @@ void setup() {
   // Hard-coded initial config for node_name and node_describe
   // ---------------------------------------------------------
 
-  node_name = "emontx";
-  node_describe = "describe:emontx-HP";
+  node_name = "wifirelay";
+  node_describe = "describe:wifirelay";
 
   #ifdef ENABLE_MQTT_CONTROL
-    node_name = "smartplug";
-    node_describe = "describe:smartplug";
+    node_name = "wifirelay";
+    node_describe = "describe:wifirelay";
   #endif
 
   // ---------------------------------------------------------
@@ -64,9 +64,9 @@ void setup() {
 
 
   #ifdef ENABLE_MQTT_CONTROL
-    // pinMode(5, OUTPUT);    // WIFI RELAY
-    pinMode(12, OUTPUT);      // SONOFF S20
-    pinMode(16, OUTPUT); 
+    pinMode(5, OUTPUT);    // WIFI RELAY
+    //pinMode(12, OUTPUT);      // SONOFF S20
+    //pinMode(16, OUTPUT); 
   #endif
 
   DEBUG.println();

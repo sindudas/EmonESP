@@ -23,6 +23,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#define ENABLE_MQTT_CONTROL 1
+
 #include "emonesp.h"
 #include "mqtt.h"
 #include "config.h"
@@ -38,8 +40,6 @@ long lastMqttReconnectAttempt = 0;
 int clientTimeout = 0;
 int i = 0;
 
-#define ENABLE_MQTT_CONTROL 1
-
 // -------------------------------------------------------------------
 // MQTT Control callback for WIFI Relay and Sonoff smartplug
 // -------------------------------------------------------------------
@@ -52,19 +52,19 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
   }
   DEBUG.println();
 
-  if (strcmp(topic,"emon/smartplug/status")==0) {
+  if (strcmp(topic,"emon/wifirelay/status")==0) {
     char state = (char) payload[0];
   
     if (state=='1') {
       DEBUG.println("STATE:1");
-      //digitalWrite(5,HIGH);       // RELAY WIFI RELAY
-      digitalWrite(12,HIGH);        // RELAY SONOFF S20
-      digitalWrite(16,HIGH); 
+      digitalWrite(5,HIGH);       // RELAY WIFI RELAY
+      //digitalWrite(12,HIGH);        // RELAY SONOFF S20
+      //digitalWrite(16,HIGH); 
     } else {
       DEBUG.println("STATE:0");
-      //digitalWrite(5,LOW);       // RELAY WIFI RELAY
-      digitalWrite(12,LOW);        // RELAY SONOFF S20
-      digitalWrite(16,LOW);
+      digitalWrite(5,LOW);       // RELAY WIFI RELAY
+      //digitalWrite(12,LOW);        // RELAY SONOFF S20
+      //digitalWrite(16,LOW);
     }
   }
 }
