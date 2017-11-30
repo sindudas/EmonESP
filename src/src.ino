@@ -21,7 +21,11 @@
  * along with EmonESP; see the file COPYING.  If not, write to the
  * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 02111-1307, USA.
+ * 
+ * COMPILATION AND UPLOAD
+ * SONOFF S20: GENERIC ESP8266 MODULE 1M (512K)
  */
+
 
 #include "emonesp.h"
 #include "config.h"
@@ -34,26 +38,10 @@
 #include "http.h"
 #include "autoauth.h"
 
-#define ENABLE_MQTT_CONTROL 1
-
 // -------------------------------------------------------------------
 // SETUP
 // -------------------------------------------------------------------
 void setup() {
-
-  // ---------------------------------------------------------
-  // Hard-coded initial config for node_name and node_describe
-  // ---------------------------------------------------------
-
-  node_name = "wifirelay";
-  node_describe = "describe:wifirelay";
-
-  #ifdef ENABLE_MQTT_CONTROL
-    node_name = "wifirelay";
-    node_describe = "describe:wifirelay";
-  #endif
-
-  // ---------------------------------------------------------
   
   delay(2000);
 
@@ -61,13 +49,6 @@ void setup() {
 #ifdef DEBUG_SERIAL1
   Serial1.begin(115200);
 #endif
-
-
-  #ifdef ENABLE_MQTT_CONTROL
-    pinMode(5, OUTPUT);    // WIFI RELAY
-    //pinMode(12, OUTPUT);      // SONOFF S20
-    //pinMode(16, OUTPUT); 
-  #endif
 
   DEBUG.println();
   DEBUG.print("EmonESP ");
@@ -87,6 +68,31 @@ void setup() {
   ota_setup();
 
   DEBUG.println("Server started");
+
+  // ---------------------------------------------------------
+  // Hard-coded initial config for node_name and node_describe
+  // ---------------------------------------------------------
+
+  node_name = "smartplug";
+  
+  if (node_name=="emontx") {
+    node_describe = "describe:emontx";
+    
+  } else if (node_name=="smartplug") {
+    node_describe = "describe:smartplug";
+    
+  } else if (node_name=="wifirelay") {
+    node_describe = "describe:wifirelay";
+  }
+  // ---------------------------------------------------------
+
+  if (node_name=="smartplug") {
+    pinMode(12, OUTPUT);
+    pinMode(16, OUTPUT);
+  } else if (node_name=="wifirelay") {
+    pinMode(5, OUTPUT);
+  }
+
 
   // Start auto auth
   auth_setup();

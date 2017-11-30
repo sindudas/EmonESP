@@ -23,8 +23,6 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#define ENABLE_MQTT_CONTROL 1
-
 #include "emonesp.h"
 #include "mqtt.h"
 #include "config.h"
@@ -52,21 +50,34 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
   }
   DEBUG.println();
 
-  if (strcmp(topic,"emon/wifirelay/status")==0) {
-    char state = (char) payload[0];
-  
-    if (state=='1') {
-      DEBUG.println("STATE:1");
-      digitalWrite(5,HIGH);       // RELAY WIFI RELAY
-      //digitalWrite(12,HIGH);        // RELAY SONOFF S20
-      //digitalWrite(16,HIGH); 
-    } else {
-      DEBUG.println("STATE:0");
-      digitalWrite(5,LOW);       // RELAY WIFI RELAY
-      //digitalWrite(12,LOW);        // RELAY SONOFF S20
-      //digitalWrite(16,LOW);
+  if (node_name=="smartplug") {
+    if (strcmp(topic,"emon/smartplug/status")==0) {
+      char state = (char) payload[0];
+      if (state=='1') {
+        DEBUG.println("STATE:1");
+        digitalWrite(12,HIGH);
+        digitalWrite(16,HIGH); 
+      } else {
+        DEBUG.println("STATE:0");
+        digitalWrite(12,LOW);
+        digitalWrite(16,LOW); 
+      }
     }
   }
+
+  if (node_name=="wifirelay") {
+    if (strcmp(topic,"emon/wifirelay/status")==0) {
+      char state = (char) payload[0];
+      if (state=='1') {
+        DEBUG.println("STATE:1");
+        digitalWrite(5,HIGH);
+      } else {
+        DEBUG.println("STATE:0");
+        digitalWrite(5,LOW);
+      }
+    }
+  }
+  
 }
 
 // -------------------------------------------------------------------
@@ -75,9 +86,7 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
 boolean mqtt_connect()
 {
   mqttclient.setServer(mqtt_server.c_str(), 1883);
-  #ifdef ENABLE_MQTT_CONTROL
-    mqttclient.setCallback(mqtt_callback);
-  #endif
+  mqttclient.setCallback(mqtt_callback);
   
   DEBUG.println("MQTT Connecting...");
   String strID = String(ESP.getChipId());
@@ -85,10 +94,8 @@ boolean mqtt_connect()
     DEBUG.println("MQTT connected");
     mqtt_publish(node_describe);
     
-    #ifdef ENABLE_MQTT_CONTROL
-      String subscribe_topic = mqtt_topic + "/" + mqtt_feed_prefix + "#";
-      mqttclient.subscribe(subscribe_topic.c_str());
-    #endif
+    String subscribe_topic = mqtt_topic + "/" + node_name + "/" + mqtt_feed_prefix + "#";
+    mqttclient.subscribe(subscribe_topic.c_str());
     
   } else {
     DEBUG.print("MQTT failed: ");
