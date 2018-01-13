@@ -50,8 +50,8 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
   }
   DEBUG.println();
 
-  if (node_name=="smartplug") {
-    if (strcmp(topic,"emon/smartplug/status")==0) {
+  if (node_type=="smartplug") {
+    if (strcmp(topic,node_status.c_str())==0) {
       char state = (char) payload[0];
       if (state=='1') {
         DEBUG.println("STATE:1");
@@ -65,8 +65,8 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
     }
   }
 
-  if (node_name=="wifirelay") {
-    if (strcmp(topic,"emon/wifirelay/status")==0) {
+  if (node_type=="wifirelay") {
+    if (strcmp(topic,node_status.c_str())==0) {
       char state = (char) payload[0];
       if (state=='1') {
         DEBUG.println("STATE:1");

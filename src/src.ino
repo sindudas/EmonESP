@@ -72,24 +72,19 @@ void setup() {
   // ---------------------------------------------------------
   // Hard-coded initial config for node_name and node_describe
   // ---------------------------------------------------------
-
-  node_name = "smartplug";
+  node_type = "smartplug";
+  node_id = "002";
   
-  if (node_name=="emontx") {
-    node_describe = "describe:emontx";
-    
-  } else if (node_name=="smartplug") {
-    node_describe = "describe:smartplug";
-    
-  } else if (node_name=="wifirelay") {
-    node_describe = "describe:wifirelay";
-  }
+  node_name = node_type + node_id;
+  node_status = "emon/"+node_name+"/status";
+  
+  node_describe = "describe:"+node_type;
   // ---------------------------------------------------------
 
-  if (node_name=="smartplug") {
+  if (node_type=="smartplug") {
     pinMode(12, OUTPUT);
     pinMode(16, OUTPUT);
-  } else if (node_name=="wifirelay") {
+  } else if (node_type=="wifirelay") {
     pinMode(5, OUTPUT);
   }
 

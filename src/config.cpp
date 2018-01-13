@@ -29,8 +29,11 @@
 #include <Arduino.h>
 #include <EEPROM.h>                   // Save config settings
 
+String node_type = "";
+String node_id = "";
 String node_name = "";
 String node_describe = "";
+String node_status = "";
 
 // Wifi Network Strings
 String esid = "";
