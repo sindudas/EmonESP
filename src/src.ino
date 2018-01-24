@@ -31,9 +31,6 @@
 #include "config.h"
 #include "wifi.h"
 #include "web_server.h"
-#include "ota.h"
-#include "input.h"
-#include "emoncms.h"
 #include "mqtt.h"
 #include "http.h"
 #include "autoauth.h"
@@ -58,24 +55,13 @@ void setup() {
   // Read saved settings from the config
   config_load_settings();
 
-  // Initialise the WiFi
-  wifi_setup();
-
-  // Bring up the web server
-  web_server_setup();
-
-  // Start the OTA update systems
-  ota_setup();
-
-  DEBUG.println("Server started");
-
   // ---------------------------------------------------------
   // Hard-coded initial config for node_name and node_describe
   // ---------------------------------------------------------
   node_type = "smartplug";
-  node_id = "002";
+  node_id = 0;
   
-  node_name = node_type + node_id;
+  node_name = node_type + String(node_id);
   node_status = "emon/"+node_name+"/status";
   
   node_describe = "describe:"+node_type;
@@ -83,11 +69,24 @@ void setup() {
 
   if (node_type=="smartplug") {
     pinMode(12, OUTPUT);
+    pinMode(13, OUTPUT);
     pinMode(16, OUTPUT);
+
+    led_flash(3000,100);
+    
   } else if (node_type=="wifirelay") {
     pinMode(5, OUTPUT);
   }
 
+  // Initialise the WiFi
+  wifi_setup();
+  led_flash(50,50);
+
+  // Bring up the web server
+  web_server_setup();
+  led_flash(50,50);
+  
+  DEBUG.println("Server started");
 
   // Start auto auth
   auth_setup();
@@ -95,29 +94,24 @@ void setup() {
   delay(100);
 } // end setup
 
+void led_flash(int ton, int toff) {
+  digitalWrite(13,LOW); delay(ton); digitalWrite(13,HIGH); delay(toff);
+}
+
 // -------------------------------------------------------------------
 // LOOP
 // -------------------------------------------------------------------
 void loop()
 {
-  ota_loop();
   web_server_loop();
   wifi_loop();
 
-  String input = "";
-  boolean gotInput = input_get(input);
 
   if (wifi_mode == WIFI_MODE_STA || wifi_mode == WIFI_MODE_AP_AND_STA)
   {
-    if(emoncms_apikey != 0 && gotInput) {
-      emoncms_publish(input);
-    }
     if(mqtt_server != 0)
     {
       mqtt_loop();
-      if(gotInput) {
-        mqtt_publish(input);
-      }
     }
   }
 

@@ -30,7 +30,7 @@
 #include <EEPROM.h>                   // Save config settings
 
 String node_type = "";
-String node_id = "";
+int node_id = 0;
 String node_name = "";
 String node_describe = "";
 String node_status = "";

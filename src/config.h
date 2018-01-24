@@ -36,7 +36,7 @@
 
 // Global config varables
 extern String node_type;
-extern String node_id;
+extern int node_id;
 extern String node_name;
 extern String node_describe;
 extern String node_status;

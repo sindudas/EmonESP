@@ -32,9 +32,6 @@
 #include "config.h"
 #include "wifi.h"
 #include "mqtt.h"
-#include "input.h"
-#include "emoncms.h"
-#include "ota.h"
 #include "debug.h"
 
 AsyncWebServer server(80);          //Create class for Web server
@@ -178,35 +175,6 @@ handleSaveNetwork(AsyncWebServerRequest *request) {
 }
 
 // -------------------------------------------------------------------
-// Save Emoncms
-// url: /saveemoncms
-// -------------------------------------------------------------------
-void
-handleSaveEmoncms(AsyncWebServerRequest *request) {
-  AsyncResponseStream *response;
-  if(false == requestPreProcess(request, response, "text/plain")) {
-    return;
-  }
-
-  config_save_emoncms(request->arg("server"),
-                      request->arg("node"),
-                      request->arg("apikey"),
-                      request->arg("fingerprint"));
-
-  char tmpStr[200];
-  snprintf(tmpStr, sizeof(tmpStr), "Saved: %s %s %s %s",
-           emoncms_server.c_str(),
-           emoncms_node.c_str(),
-           emoncms_apikey.c_str(),
-           emoncms_fingerprint.c_str());
-  DBUGLN(tmpStr);
-
-  response->setCode(200);
-  response->print(tmpStr);
-  request->send(response);
-}
-
-// -------------------------------------------------------------------
 // Save MQTT Config
 // url: /savemqtt
 // -------------------------------------------------------------------
@@ -257,10 +225,6 @@ handleSaveAdmin(AsyncWebServerRequest *request) {
   request->send(response);
 }
 
-// -------------------------------------------------------------------
-// Last values on atmega serial
-// url: /lastvalues
-// -------------------------------------------------------------------
 void handleLastValues(AsyncWebServerRequest *request) {
   AsyncResponseStream *response;
   if(false == requestPreProcess(request, response, "text/plain")) {
@@ -268,10 +232,9 @@ void handleLastValues(AsyncWebServerRequest *request) {
   }
 
   response->setCode(200);
-  response->print(last_datastr);
+  response->print("");
   request->send(response);
 }
-
 // -------------------------------------------------------------------
 // Returns status json
 // url: /status
@@ -297,30 +260,10 @@ handleStatus(AsyncWebServerRequest *request) {
 
   s += "\"srssi\":\""+String(WiFi.RSSI())+"\",";
   s += "\"ipaddress\":\""+ipaddress+"\",";
-  s += "\"emoncms_connected\":\""+String(emoncms_connected)+"\",";
-  s += "\"packets_sent\":\""+String(packets_sent)+"\",";
-  s += "\"packets_success\":\""+String(packets_success)+"\",";
-
   s += "\"mqtt_connected\":\""+String(mqtt_connected())+"\",";
 
   s += "\"free_heap\":\"" + String(ESP.getFreeHeap()) + "\"";
 
-#ifdef ENABLE_LEGACY_API
-  s += ",\"version\":\"" + currentfirmware + "\"";
-  s += ",\"ssid\":\"" + esid + "\"";
-  //s += ",\"pass\":\""+epass+"\""; security risk: DONT RETURN PASSWORDS
-  s += ",\"emoncms_server\":\"" + emoncms_server + "\"";
-  s += ",\"emoncms_node\":\"" + emoncms_node + "\"";
-  //s += ",\"emoncms_apikey\":\""+emoncms_apikey+"\""; security risk: DONT RETURN APIKEY
-  s += ",\"emoncms_fingerprint\":\"" + emoncms_fingerprint + "\"";
-  s += ",\"mqtt_server\":\"" + mqtt_server + "\"";
-  s += ",\"mqtt_topic\":\"" + mqtt_topic + "\"";
-  s += ",\"mqtt_user\":\"" + mqtt_user + "\"";
-  //s += ",\"mqtt_pass\":\""+mqtt_pass+"\""; security risk: DONT RETURN PASSWORDS
-  s += ",\"mqtt_feed_prefix\":\""+mqtt_feed_prefix+"\"";
-  s += ",\"www_username\":\"" + www_username + "\"";
-  //s += ",\"www_password\":\""+www_password+"\""; security risk: DONT RETURN PASSWORDS
-#endif
   s += "}";
 
   response->setCode(200);
@@ -400,95 +343,6 @@ handleRestart(AsyncWebServerRequest *request) {
   request->send(response);
 
   systemRestartTime = millis() + 1000;
-}
-
-// -------------------------------------------------------------------
-// Handle test input API
-// url /input
-// e.g http://192.168.0.75/input?string=CT1:3935,CT2:325,T1:12.5,T2:16.9,T3:11.2,T4:34.7
-// -------------------------------------------------------------------
-void
-handleInput(AsyncWebServerRequest *request) {
-  AsyncResponseStream *response;
-  if(false == requestPreProcess(request, response, "text/plain")) {
-    return;
-  }
-
-  input_string = request->arg("string");
-
-  response->setCode(200);
-  response->print(input_string);
-  request->send(response);
-
-  DBUGLN(input_string);
-}
-
-// -------------------------------------------------------------------
-// Check for updates and display current version
-// url: /firmware
-// -------------------------------------------------------------------
-void handleUpdateCheck(AsyncWebServerRequest *request) {
-  AsyncResponseStream *response;
-  if(false == requestPreProcess(request, response)) {
-    return;
-  }
-
-  DBUGLN("Running: " + currentfirmware);
-  // Get latest firmware version number
-  // BUG/HACK/TODO: This will block, should be done in the loop call
-  String latestfirmware = ota_get_latest_version();
-  DBUGLN("Latest: " + latestfirmware);
-  // Update web interface with firmware version(s)
-  String s = "{";
-  s += "\"current\":\""+currentfirmware+"\",";
-  s += "\"latest\":\""+latestfirmware+"\"";
-  s += "}";
-
-  response->setCode(200);
-  response->print(s);
-  request->send(response);
-}
-
-// -------------------------------------------------------------------
-// Update firmware
-// url: /update
-// -------------------------------------------------------------------
-void handleUpdate(AsyncWebServerRequest *request) {
-  // BUG/HACK/TODO: This will block, should be done in the loop call
-
-  AsyncResponseStream *response;
-  if(false == requestPreProcess(request, response, "text/plain")) {
-    return;
-  }
-
-
-  DBUGLN("UPDATING...");
-  delay(500);
-
-  t_httpUpdate_return ret = ota_http_update();
-
-  int retCode = 400;
-  String str = "Error";
-  switch(ret) {
-    case HTTP_UPDATE_FAILED:
-      str = "Update failed error (";
-      str += ESPhttpUpdate.getLastError();
-      str += "): ";
-      str += ESPhttpUpdate.getLastErrorString();
-      break;
-    case HTTP_UPDATE_NO_UPDATES:
-      str = "No update, running latest firmware";
-      break;
-    case HTTP_UPDATE_OK:
-      retCode = 200;
-      str = "Update done!";
-      break;
-  }
-  response->setCode(retCode);
-  response->print(str);
-  request->send(response);
-
-  DBUGLN(str);
 }
 
 // -------------------------------------------------------------------
@@ -612,7 +466,6 @@ web_server_setup()
   server.on("/config", handleConfig);
 
   server.on("/savenetwork", handleSaveNetwork);
-  server.on("/saveemoncms", handleSaveEmoncms);
   server.on("/savemqtt", handleSaveMqtt);
   server.on("/saveadmin", handleSaveAdmin);
 
@@ -621,15 +474,11 @@ web_server_setup()
 
   server.on("/scan", handleScan);
   server.on("/apoff", handleAPOff);
-  server.on("/input", handleInput);
   server.on("/lastvalues", handleLastValues);
-
+  
   // Simple Firmware Update Form
   server.on("/upload", HTTP_GET, handleUpdateGet);
   server.on("/upload", HTTP_POST, handleUpdatePost, handleUpdateUpload);
-
-  server.on("/firmware", handleUpdateCheck);
-  server.on("/update", handleUpdate);
 
   server.onNotFound(handleNotFound);
   server.begin();
