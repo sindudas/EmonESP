@@ -60,7 +60,7 @@ For applications that only require basic posting of data from one emonTx to a re
 
 # Requirements
 
-- ESP-12E module with 4M Flash
+- ESP-01/ESP-12 module with minimum 1M Flash
 
 ***
 
