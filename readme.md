@@ -255,8 +255,13 @@ This wil upload both the fimware and fs in a single command
 
 Put ESP into bootloader mode
 
+ESP-4M:
+
 `esptool.py write_flash 0x000000 .pioenvs/emonesp/firmware.bin 0x300000 .pioenvs/emonesp/spiffs.bin`
 
+ESP-1M
+
+`esptool.py write_flash 0x000000 .pioenvs/emonesp/firmware.bin 0x0DB000 .pioenvs/emonesp/spiffs.bin`
 
 
 ##### c.) OTA upload over local network
@@ -314,6 +319,7 @@ Install steps from: https://github.com/esp8266/Arduino
 - At the bottom of this window find the field “Additional Board Manager URLs” and enter ‘http://arduino.esp8266.com/stable/package_esp8266com_index.json`. You can add multiple URLs, separating them with commas.
 - Open `Tools > Board > Board Manager`, scroll down and click on esp8266 platform, select version then install
 - Select `Tools > Board > Generic ESP8266 Module` (required for EmonESP)
+- Select `Tools > Flash Size > 1M (128K SPIFFS)` (required for EmonESP-1M)
 
 #### 2. Install ESP filesystem file uploader
 
@@ -362,11 +368,17 @@ Erasing flash (this may take a while)...
 Erase took 8.0 seconds
 ```
 
-#### Fully erase ESP-12E
+#### Fully erase 4M-ESP (ex: ESP-12E)
 
 To fully erase all memory locations on an ESP-12 (4Mb) we need to upload a blank file to each memory location
 
 `esptool.py write_flash 0x000000 blank_1MB.bin 0x100000 blank_1MB.bin 0x200000 blank_1MB.bin 0x300000 blank_1MB.bin`
+
+#### Fully erase 1M-ESP (ex: ESP-01)
+
+To fully erase all memory locations on an ESP-01 (1Mb) we need to upload a blank file to each memory location
+
+`esptool.py write_flash 0x000000 blank_1MB.bin`
 
 ***
 
